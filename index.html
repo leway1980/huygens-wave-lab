@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>惠更斯波動實驗室｜高一物理</title>
+<style>
+:root{color-scheme:dark;--bg:#101c2d;--panel:#192b40;--text:#eef7ff;--muted:#aebfd1;--cyan:#52d5f0;--pink:#ff8bb7;--gold:#ffd072}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,"Microsoft JhengHei",sans-serif}main{max-width:1440px;margin:auto;padding:20px}header{display:flex;align-items:end;justify-content:space-between;gap:15px}h1{margin:0;font-size:clamp(24px,3vw,34px)}header p{margin:3px 0;color:var(--muted)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 12px}button{border:1px solid #4b6074;border-radius:9px;background:#243b50;color:var(--text);font:inherit;padding:9px 14px;cursor:pointer}button:hover,button:focus-visible{border-color:var(--cyan)}button[aria-selected=true]{background:#08768b;border-color:#53d5e7}.layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:14px}.stage,.controls{background:var(--panel);border:1px solid #34495b;border-radius:14px;overflow:hidden}.stage{padding:12px}canvas{width:100%;aspect-ratio:1000/560;display:block;background:#0b1726;border-radius:9px}.caption{padding:9px 4px 2px;color:#d3e6f4;min-height:3em}.controls{padding:16px}.controls h2{font-size:18px;margin:0 0 12px}.row{margin:0 0 16px}.row label{display:flex;justify-content:space-between;gap:6px}select{width:100%;background:#243b50;color:#eef7ff;border:1px solid #64798c;border-radius:6px;padding:8px;font:inherit}.row input[type=range]{width:100%;accent-color:var(--cyan)}.check{display:flex;gap:8px;align-items:center;margin:12px 0}.check input{width:19px;height:19px;accent-color:#52d5f0}.actions{display:flex;gap:7px;flex-wrap:wrap}.small{font-size:13px;color:var(--muted);margin-top:16px}.legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:8px;font-size:14px}.cyan{color:var(--cyan)}.pink{color:var(--pink)}.gold{color:var(--gold)}.formula{background:#0d2031;border-radius:9px;padding:11px;margin-top:12px;line-height:1.8}.hidden{display:none!important} @media(max-width:780px){main{padding:12px}.layout{grid-template-columns:1fr}.controls{padding:14px}header{display:block}canvas{min-height:200px}.caption{min-height:0}}
+</style></head><body><main>
+<header><div><h1>惠更斯波動實驗室</h1><p>高一物理・看見波前如何傳播與改變</p></div><p>可暫停、調整參數，再慢慢講解</p></header>
+<div class="tabs" role="tablist" aria-label="波動現象"><button role="tab" data-mode="plane">平面波</button><button role="tab" data-mode="circle">圓形波</button><button role="tab" data-mode="refraction">折射與 Snell 定律</button><button role="tab" data-mode="reflection">反射</button><button role="tab" data-mode="interference">雙波源干涉</button><button role="tab" data-mode="diffraction">單縫繞射</button><button role="tab" data-mode="sound">聲音干涉與偵測器</button><button role="tab" data-mode="laser">雷射雙縫干涉</button></div>
+<div class="layout"><section class="stage"><canvas tabindex="0" style="touch-action:none" id="wave" width="1000" height="560" aria-label="波動示意圖"></canvas><div class="legend" id="lineLegend"><span class="cyan">━━ 子波的包絡（波峰波前）</span><span class="gold">● 波前上的點波源</span><span class="gold">◠ 持續擴大的子波</span></div><div class="legend hidden" id="fieldLegend"><span class="cyan">━━ 波源 A／縫內點 1</span><span class="pink">━━ 波源 B／縫內點 2</span><span class="gold">━━ 縫內點 3／等路徑線</span></div><div class="caption" id="caption"></div></section>
+<aside class="controls"><h2>調整與觀察</h2><div class="row"><label for="lambda"><span>介質 1 的波長 λ₁</span><output id="lambdaOut"></output></label><input id="lambda" type="range" min="45" max="120" step="5" value="80"></div>
+<div class="row" id="angleRow"><label for="angle"><span>入射角 θ₁</span><output id="angleOut"></output></label><input id="angle" type="range" min="0" max="50" step="1" value="35"></div>
+<div class="row" id="speedRow"><label for="speed"><span>波速比 v₂ / v₁</span><output id="speedOut"></output></label><input id="speed" type="range" min="0.25" max="2.5" step="0.05" value="0.7"></div>
+<div class="row" id="gapRow"><label for="gap"><span id="gapLabel">波源距離</span><output id="gapOut"></output></label><input id="gap" type="range" min="1" max="1200" step="0.001" value="140"></div>
+<div class="row hidden" id="diffractionPresets"><div class="actions"><button id="slitNarrow">縫寬 ≪ 波長</button><button id="slitEqual">縫寬 ≈ 波長</button><button id="slitWide">縫寬 ≫ 波長</button></div></div><div class="row hidden" id="sourceRow"><label for="sourceView">波源顯示</label><select id="sourceView"><option value="both">兩個波源</option><option value="a">只看波源 A</option><option value="b">只看波源 B</option></select></div><div class="hidden" id="laserControls"><div class="row"><label for="laserColor">雷射顏色</label><select id="laserColor"><option value="red">紅光 650 nm</option><option value="green">綠光 532 nm</option><option value="custom">自訂波長</option></select></div><div class="row"><label for="laserLambda">光的波長 <output id="laserLambdaOut"></output></label><input id="laserLambda" type="range" min="400" max="700" value="650" step="1"></div><div class="row"><label for="slitDistance">雙縫間距 d <output id="slitDistanceOut"></output></label><input id="slitDistance" type="range" min="0.1" max="0.8" step="0.05" value="0.35"></div><div class="row"><label for="screenDistance">屏幕距離 D <output id="screenDistanceOut"></output></label><input id="screenDistance" type="range" min="0.5" max="3" step="0.1" value="1.5"></div><label class="check"><input id="laserCompare" type="checkbox" checked>同時顯示紅光與綠光</label><div id="laserMixControls"><div class="row"><label for="laserSeparation">紅綠條紋分開程度 <output id="laserSeparationOut"></output></label><input id="laserSeparation" type="range" min="0" max="100" step="1" value="100"></div><div class="row"><label for="laserShift">綠光條紋上下位移 <output id="laserShiftOut"></output></label><input id="laserShift" type="range" min="-4" max="4" step="0.1" value="0"></div></div><div class="row"><label for="laserProbe">檢視屏幕位置 y <output id="laserProbeOut"></output></label><input id="laserProbe" type="range" min="-10" max="10" step="0.1" value="0"></div></div><div class="hidden" id="soundControls"><div class="row"><label for="soundFrequency">兩波源共同頻率 <output id="soundFrequencyOut"></output></label><input id="soundFrequency" type="range" min="100" max="1000" step="10" value="440"></div><button id="soundToggle">播放偵測器聲音</button><p class="small" id="soundStatus">拖曳麥克風；也可聚焦圖面後用方向鍵移動。動畫以慢動作呈現。</p></div><div class="row" id="pointsRow"><label for="points">次級點波源數量 <output id="pointsOut"></output></label><input id="points" type="range" min="1" max="25" value="13" step="1"></div><label class="check" id="envelopeRow"><input id="envelope" type="checkbox" checked><span id="envelopeLabel">顯示連續波前的理想包絡</span></label><label class="check" id="waveletRow"><input id="wavelets" type="checkbox" checked>顯示擴大的子波</label><label class="check" id="geometryRow"><input id="geometry" type="checkbox" checked>顯示角度與法線</label>
+<div class="actions"><button id="play">暫停</button><button id="step">前進一小步</button><button id="reset">重設</button></div><div class="formula" id="formula"></div><div class="small">距離採畫面比例單位；本頁是二維教學模型。波長越大，固定介質波速時頻率越低。波前以清楚線條顯示；可分別觀察兩個波源。</div></aside></div>
+</main><script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),c=$('wave'),ctx=c.getContext('2d'),W=1000,H=560,PI=Math.PI;
+const modes=['plane','circle','refraction','reflection','interference','diffraction'];let mode='plane',t=0,playing=true,last=0,field=null,fieldKey='',markTracks={};
+const ui={lambda:$('lambda'),angle:$('angle'),speed:$('speed'),gap:$('gap'),wavelets:$('wavelets'),geometry:$('geometry'),sourceView:$('sourceView'),laserColor:$('laserColor'),laserLambda:$('laserLambda'),slitDistance:$('slitDistance'),screenDistance:$('screenDistance'),laserCompare:$('laserCompare'),laserSeparation:$('laserSeparation'),laserShift:$('laserShift'),laserProbe:$('laserProbe'),soundFrequency:$('soundFrequency'),points:$('points'),envelope:$('envelope')};
+const pointCounts={plane:13,circle:18,refraction:25,reflection:25,diffraction:3};
+const captions={sound:'聲音干涉：A、B 同頻同相。拖曳偵測器，聽等振幅模型在相長處變大聲、相消處變小聲；動畫慢動作，聲音以實際頻率播放。',laser:'左：雙縫次級波 → 中：屏幕位置對應的強度曲線 → 右：同位置的亮暗條紋。紅綠各自干涉，重合處做色光強度相加；波前為放大示意，中右共用位置刻度。',plane:'平面波：黃色各點同時發出不斷擴大的子波；青色直線是所有子波向前的共同切線（包絡）。',circle:'圓形波：原波前上的每一點發出子波，向外的共同包絡仍為圓形；三維對應球面波。',refraction:'波進入不同介質：頻率不變，波速改變，波長也隨之改變。角度都從法線量起。',reflection:'反射時，波留在原介質中：入射角等於反射角，頻率與波長不變。',interference:'干涉：藍、粉兩組圓弧分別來自同頻同相的 A、B；可分開觀察，再用路徑差判斷相長與相消。',diffraction:'單縫：細弧是縫內取樣子波，亮青線是連續縫口疊加後的新波前。比較 a/λ：遠小於 1、接近 1、遠大於 1；繞射程度連續改變，沒有突然切換的臨界值。'};
+function params(){return {L:+ui.lambda.value,a:+ui.angle.value*PI/180,r:+ui.speed.value,g:+ui.gap.value,count:+ui.points.value}}
+function line(x1,y1,x2,y2,color='#fff',width=2,dash=[]){ctx.beginPath();ctx.setLineDash(dash);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([])}
+function text(s,x,y,color='#eef7ff',size=22){ctx.fillStyle=color;ctx.font=`600 ${size}px system-ui, Microsoft JhengHei`;ctx.fillText(s,x,y)}
+function arrow(x,y,dx,dy,color='#f5f9ff',label=''){const n=Math.hypot(dx,dy),ux=dx/n,uy=dy/n;line(x,y,x+dx,y+dy,color,3);ctx.beginPath();ctx.moveTo(x+dx,y+dy);ctx.lineTo(x+dx-ux*13-uy*6,y+dy-uy*13+ux*6);ctx.lineTo(x+dx-ux*13+uy*6,y+dy-uy*13-ux*6);ctx.closePath();ctx.fillStyle=color;ctx.fill();if(label)text(label,x+dx+8,y+dy,color,19)}
+function wavelengthMark(nx,ny,L,phase,x,y,originY,label){const q=Math.round((nx*x+ny*(y-originY)-phase)/L)*L+phase,delta=q-(nx*x+ny*(y-originY));x+=delta*nx;y+=delta*ny;arrow(x,y,nx*L,ny*L,'#ffd072');arrow(x+nx*L,y+ny*L,-nx*L,-ny*L,'#ffd072');text(label,x+nx*L*.5+8,y+ny*L*.5-8,'#ffd072',20)}
+function circle(x,y,r,color='#ffd072',width=1.5){ctx.beginPath();ctx.arc(x,y,Math.max(0,r),0,2*PI);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke()}
+function angleArc(start,end,color){ctx.beginPath();ctx.arc(690,280,55,start,end);ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.stroke()}
+function fronts(nx,ny,L,phase,color,dashed=false){const diag=1500;for(let j=-40;j<=40;j++){const q=j*L+phase;const x=nx*q,y=ny*q;line(x-ny*diag,y+nx*diag,x+ny*diag,y-nx*diag,color,2,dashed?[8,8]:[])}}
+function clipping(x,y,w,h,fn){ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();fn();ctx.restore()}
+function frontPair(nx,ny,L,phase){fronts(nx,ny,L,phase,'#55d8f0');fronts(nx,ny,L,phase+L/2,'#ff85b5',true)}
+// Each cohort is emitted once per period. All radii grow at the local wave speed.
+function cohorts(period,maxAge,fn){const last=Math.floor(t/period);for(let j=Math.max(0,last-Math.ceil(maxAge/period));j<=last;j++){let age=t-j*period;if(age>=0&&age<=maxAge)fn(age,j)}}
+function dot(x,y,color='#ffd072',r=4){ctx.beginPath();ctx.arc(x,y,r,0,2*PI);ctx.fillStyle=color;ctx.fill()}
+function arc(x,y,r,a,b,color,width=1.6){if(r<.01)return;ctx.beginPath();ctx.arc(x,y,r,a,b);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke()}
+function drawPlane(p){
+ const sx=170,period=p.L/50;
+ line(sx,45,sx,515,'#70869c',1,[4,6]);
+ if(ui.wavelets.checked)cohorts(period,17,age=>{let r=50*age;for(const y of pointPositions(p.count,70,490))arc(sx,y,r,-PI/2,PI/2,'#ffd07299');});
+ cohorts(period,17,age=>{let x=sx+50*age;if(x<W){if(ui.envelope.checked)line(x,70,x,490,'#52d5f0',3);if(ui.envelope.checked&&ui.wavelets.checked)for(const y of pointPositions(p.count,70,490))dot(x,y,'#c7f6ff',2);}});
+ for(const y of pointPositions(p.count,70,490))dot(sx,y);
+ text('波前上的次級點波源',30,32,'#ffd072',21);
+ text('擴大的子波 → 共同切線（新波前）',420,32,'#52d5f0',21);
+ arrow(70,535,100,0,'#eef7ff','傳播方向');
+ if(ui.envelope.checked)cohorts(period,17,(age,j)=>{if(age>=period)travellingPair(sx+50*(age-period),450,p.L,0,'λ')});
+}
+function drawCircle(p){
+ const cx=345,cy=280,R=95,period=p.L/50;
+ circle(cx,cy,R,'#70869c',1);
+ if(ui.wavelets.checked)cohorts(period,14,age=>{let r=50*age;for(let j=0;j<p.count;j++){let a=j*2*PI/p.count;arc(cx+R*Math.cos(a),cy+R*Math.sin(a),r,a-PI/2,a+PI/2,'#ffd07299');}});
+ cohorts(period,14,age=>{const r=R+50*age;if(ui.envelope.checked)circle(cx,cy,r,'#52d5f0',3);if(ui.envelope.checked&&ui.wavelets.checked)for(let j=0;j<p.count;j++){let a=j*2*PI/p.count;dot(cx+r*Math.cos(a),cy+r*Math.sin(a),'#c7f6ff',2);}});
+ for(let j=0;j<p.count;j++){let a=j*2*PI/p.count;dot(cx+R*Math.cos(a),cy+R*Math.sin(a));}
+ dot(cx,cy,'#fff',5);text('原點波源',cx-44,cy+30,'#eef7ff',18);
+ text('原圓形波前上的點 → 擴大的子波 → 圓形包絡',25,32,'#52d5f0',21);
+ if(ui.envelope.checked)cohorts(period,14,(age,j)=>{if(age>=period)travellingPair(cx+R+50*(age-period),cy,p.L,0,'λ')});
+}
+function segment(nx,ny,q,ox,oy,region,sourceBounds=false){
+ const bx=ox+nx*q,by=oy+ny*q,tx=-ny,ty=nx;let lo=-2000,hi=2000;
+ function bound(base,d,min,max){if(Math.abs(d)<1e-9)return base>=min&&base<=max;let a=(min-base)/d,b=(max-base)/d;lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));return lo<=hi}
+ if(!bound(bx,tx,region[0],region[2])||!bound(by,ty,region[1],region[3]))return null;
+ if(sourceBounds&&Math.abs(ny)>1e-7&&!bound(bx-nx*(by-oy)/ny,tx-nx*ty/ny,10,990))return null;
+ return {nx,ny,q,ox,oy,lo,hi,bx,by,tx,ty};
+}
+function paintSegment(s,color,width=2){if(s)line(s.bx+s.tx*s.lo,s.by+s.ty*s.lo,s.bx+s.tx*s.hi,s.by+s.ty*s.hi,color,width)}
+function travellingPair(x,y,dx,dy,label){if(Math.min(x,x+dx)<15||Math.min(y,y+dy)<15||Math.max(x,x+dx)>985||Math.max(y,y+dy)>545)return false;arrow(x,y,dx,dy,'#ffd072');arrow(x+dx,y+dy,-dx,-dy,'#ffd072');text(label,x+dx/2+8,y+dy/2-8,'#ffd072',20);return true}
+function pointPositions(count,min,max){return count===1?[(min+max)/2]:Array.from({length:count},(_,j)=>min+(max-min)*j/(count-1))}
+function markExisting(fronts,L,label){
+ const sorted=fronts.filter(Boolean).sort((a,b)=>a.q-b.q);
+ for(let i=0;i<sorted.length-1;i++){
+ const a=sorted[i],b=sorted[i+1];if(Math.abs(b.q-a.q-L)>1e-6)continue;
+ const u=a.tx*(650-a.ox)+a.ty*((label==='λ₂'?420:140)-a.oy);
+ const lo=Math.max(a.lo,b.lo)+15,hi=Math.min(a.hi,b.hi)-15;if(u<lo||u>hi)continue;
+ const x=a.bx+a.tx*u,y=a.by+a.ty*u,ex=b.bx+b.tx*u,ey=b.by+b.ty*u;
+ if(!travellingPair(x,y,ex-x,ey-y,label))continue;
+ const data=JSON.parse(c.dataset.measurements||'[]');data.push({label,x,y,ex,ey,cohorts:[a.id,b.id]});c.dataset.measurements=JSON.stringify(data);
+ }
+}
+function interfaceDraw(p,reflectMode){
+ const A=170,Y=280,st=Math.sin(p.a),ct=Math.cos(p.a),sin2=p.r*st,tir=!reflectMode&&sin2>1+1e-10,critical=!reflectMode&&Math.abs(sin2-1)<=1e-10,isReflect=reflectMode||tir;
+ const a2=isReflect?p.a:Math.asin(Math.min(1,sin2)),nx=isReflect?st:Math.sin(a2),ny=isReflect?-ct:Math.cos(a2),v=50*(isReflect?1:p.r),period=p.L/50;
+ ctx.fillStyle='#10253a';ctx.fillRect(0,0,W,Y);ctx.fillStyle=reflectMode?'#263645':'#163c4a';ctx.fillRect(0,Y,W,H-Y);
+ const incoming=[],outgoing=[];
+ for(let j=Math.max(0,Math.floor(t/period)-24);j<=Math.floor(t/period)+14;j++){
+  let f=segment(st,ct,50*(t-j*period),A,Y,[0,0,1000,280]);if(f)f.id=j;incoming.push(f);paintSegment(f,'#52d5f0');
+ }
+ if(ui.wavelets.checked&&!critical)clipping(0,isReflect?0:Y,W,isReflect?Y:H-Y,()=>{
+  for(const x of pointPositions(p.count,10,970)){let delay=(x-A)*st/50,last=Math.floor((t-delay)/period);for(let j=Math.max(0,last-12);j<=last;j++){let age=t-j*period-delay;if(age>=0&&age<24)arc(x,Y,v*age,isReflect?PI:0,isReflect?2*PI:PI,'#ffd07288',1.5)}}
+ });
+ if(!critical)for(let j=Math.max(0,Math.floor(t/period)-24);j<=Math.floor(t/period)+8;j++){
+  const f=segment(nx,ny,v*(t-j*period),A,Y,isReflect?[0,0,1000,280]:[0,280,1000,560],true);if(f)f.id=j;outgoing.push(f);if(ui.envelope.checked)paintSegment(f,isReflect?'#ff8bb7':'#52d5f0',3);
+ }
+ line(0,Y,W,Y,'#e6f3fa',2);
+ for(const x of pointPositions(p.count,10,970))dot(x,Y,t>=(x-A)*st/50?'#ffd072':'#70869c',3.5);
+ text('介質 1',16,25);text(reflectMode?'反射面':'介質 2',16,315);
+ text(tir?'超過臨界角：全反射，無傳播的折射波前':critical?'臨界角：折射方向沿介面':'介面各點被波碰到後，才開始發出子波',18,535,'#ffd072',20);
+ if(ui.geometry.checked){const ox=690,oy=Y;line(ox,55,ox,505,'#e8f4fb99',2,[7,7]);text('法線',ox+8,70,'#eef7ff',18);arrow(ox-st*155,oy-ct*155,st*140,ct*140);arrow(ox,oy,nx*150,ny*150,'#ffd072');text('θ₁ '+Math.round(p.a*180/PI)+'°',ox-130,oy-70,'#fff',19);text(isReflect?'θᵣ '+Math.round(p.a*180/PI)+'°':'θ₂ '+(a2*180/PI).toFixed(1)+'°',ox+28,isReflect?oy-70:oy+85,'#ffd072',19);if(p.a>.01){angleArc(-PI/2-p.a,-PI/2,'#fff');angleArc(isReflect?-PI/2:PI/2-a2,isReflect?-PI/2+p.a:PI/2,'#ffd072')}}
+ markExisting(incoming,p.L,'λ₁');if(!critical&&ui.envelope.checked)markExisting(outgoing,isReflect?p.L:p.L*p.r,isReflect?'λᵣ':'λ₂');
+}
+function drawInterference(p){
+ const period=p.L/50,view=ui.sourceView.value,sources=[{x:270,y:280-p.g/2,color:'#52d5f0',id:'a',name:'A'},{x:270,y:280+p.g/2,color:'#ff8bb7',id:'b',name:'B'}];
+ for(const s of sources){if(view!=='both'&&view!==s.id)continue;cohorts(period,20,age=>{if(age>.02)circle(s.x,s.y,50*age,s.color,2)});dot(s.x,s.y,s.color,6);text('波源 '+s.name,s.x-85,s.y-12,s.color,20)}
+ if(view==='both'){line(425,280,950,280,'#ffd072',2,[7,7]);text('中央線：到 A、B 等距，路徑差 = 0',435,260,'#ffd072',19)}
+ text('實線：各波源向外傳播的波峰',25,32,'#eef7ff',21);
+}
+let diffractionCache=null;
+function aperturePhasor(dx,y,a,L,N=96){let re=0,im=0;const k=2*PI/L;for(let j=0;j<N;j++){const sy=-a/2+(j+.5)*a/N,r=Math.hypot(dx,y-sy),w=dx/r/Math.sqrt(r),phase=k*r-PI/4;re+=w*Math.cos(phase);im+=w*Math.sin(phase)}return [re/N,im/N]}
+function diffractionField(p){const scale=Math.min(1,320/p.g),a=p.g*scale,L=p.L*scale,key=[a,L].join(':');if(diffractionCache?.key===key)return diffractionCache;
+ const grid=3,nx=200,ny=171,re=new Float32Array(nx*ny),im=new Float32Array(nx*ny),max=new Float32Array(nx);
+ const N=Math.min(192,Math.max(48,Math.ceil(a/L*14)));
+ for(let ix=0;ix<nx;ix++)for(let iy=0;iy<ny;iy++){const x=5+ix*grid,y=25+iy*grid-280,[r,i]=aperturePhasor(x,y,a,L,N),idx=iy*nx+ix;re[idx]=r;im[idx]=i;max[ix]=Math.max(max[ix],Math.hypot(r,i))}
+ return diffractionCache={key,scale,a,L,grid,nx,ny,re,im,max};
+}
+function drawDiffractedFronts(p){
+ const f=diffractionField(p),{scale,a,grid,nx,ny,re,im,max}=f,phase=2*PI*50*t/p.L,co=Math.cos(phase),si=Math.sin(phase),value=new Float32Array(re.length),crest=new Float32Array(re.length),nodes=new Map(),segments=[];
+ for(let i=0;i<re.length;i++){value[i]=im[i]*co-re[i]*si;crest[i]=re[i]*co+im[i]*si}
+ function node(pt){let key=pt.x.toFixed(5)+','+pt.y.toFixed(5);if(!nodes.has(key))nodes.set(key,{...pt,key,edges:[]});return nodes.get(key)}
+ for(let iy=0;iy<ny-1;iy++)for(let ix=0;ix<nx-1;ix++){
+  const ids=[iy*nx+ix,iy*nx+ix+1,(iy+1)*nx+ix+1,(iy+1)*nx+ix],x=395+ix*grid,y=25+iy*grid,pts=[[x,y],[x+grid,y],[x+grid,y+grid],[x,y+grid]],edges=[];
+  for(let e=0;e<4;e++){const u=e,v=(e+1)%4,A=ids[u],B=ids[v];if(value[A]*value[B]>=0)continue;const h=value[A]/(value[A]-value[B]),amp=crest[A]+h*(crest[B]-crest[A]);if(amp<=0)continue;const px=pts[u][0]+h*(pts[v][0]-pts[u][0]),py=pts[u][1]+h*(pts[v][1]-pts[u][1]);if(Math.hypot(px-390,Math.max(0,Math.abs(py-280)-a/2))>50*t*scale)continue;edges.push({x:px,y:py,strength:amp/Math.max(1e-9,max[ix],max[ix+1])});}
+  for(let j=0;j+1<edges.length;j+=2){const A=node(edges[j]),B=node(edges[j+1]),id=segments.length;segments.push({A,B,used:false});A.edges.push(id);B.edges.push(id)}
+ }
+ // Shared cell edges are stitched first; intensity is applied to whole curves, never by deleting isolated cells.
+ let curveCount=0,drawnSegments=0;const lengths=[];
+ const starts=[...nodes.values()].sort((a,b)=>a.edges.length-b.edges.length);
+ ctx.save();ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='#68e2ff';ctx.lineWidth=2.5;
+ for(const start of starts)for(const initial of start.edges){if(segments[initial].used)continue;let current=start,edge=initial,path=[start];while(edge!==undefined){const seg=segments[edge];seg.used=true;current=seg.A===current?seg.B:seg.A;path.push(current);edge=current.edges.find(id=>!segments[id].used)}
+  const strength=path.reduce((sum,n)=>sum+n.strength,0)/path.length;if(path.length<20||strength<.08)continue;
+  ctx.globalAlpha=Math.min(1,.45+Math.sqrt(strength)*.55);ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);
+  for(let i=1;i<path.length-1;i++)ctx.quadraticCurveTo(path[i].x,path[i].y,(path[i].x+path[i+1].x)/2,(path[i].y+path[i+1].y)/2);ctx.lineTo(path.at(-1).x,path.at(-1).y);ctx.stroke();curveCount++;drawnSegments+=path.length-1;lengths.push(path.length);
+ }
+ ctx.restore();c.dataset.diffraction=JSON.stringify({ratio:p.g/p.L,segments:drawnSegments,curves:curveCount,longest:Math.max(0,...lengths),shortest:Math.min(Infinity,...lengths),scale});
+}
+function drawDiffraction(p){
+ const wall=390,Y=280,{scale,a,L}=diffractionField(p),period=p.L/50;
+ clipping(0,0,wall-5,H,()=>{for(let j=Math.max(0,Math.floor(t/period)-30);j<=Math.floor(t/period)+30;j++){const x=wall+50*scale*(t-j*period);if(x>=20&&x<wall)line(x,55,x,510,'#52d5f0',2)}});
+ line(wall,0,wall,Y-a/2,'#e8f3fa',6);line(wall,Y+a/2,wall,H,'#e8f3fa',6);
+ const colors=['#52d5f0','#ff8bb7','#ffd072'];
+ if(ui.wavelets.checked)for(let j=0;j<p.count;j++){const sy=Y-a/2+(j+.5)*a/p.count,col=colors[j%3];dot(wall,sy,col,4);clipping(wall+4,45,W-wall-4,H-80,()=>cohorts(period,24,age=>arc(wall,sy,50*scale*age,-PI/2,PI/2,col+'55',1)));}
+ if(ui.envelope.checked)drawDiffractedFronts(p);
+ text('入射平面波',20,28,'#52d5f0',20);text('青線：縫口連續子波疊加後的新波前',425,28,'#68e2ff',20);
+ text('a / λ = '+(p.g/p.L).toFixed(2),20,535,'#ffd072',20);
+ text(scale<1?'已等比例縮小，波長與縫寬使用同一比例尺':'黃色／粉色細弧為可選的子波示意',425,535,'#aebfd1',16);
+}
+let detector={x:760,y:280},dragging=false,audioCtx=null,oscillator=null,soundGain=null,soundOn=false;
+function soundReading(){const f=+ui.soundFrequency.value,lambda=343/f,d1=Math.hypot(detector.x-270,detector.y-(280-(+ui.gap.value)/2))*.01,d2=Math.hypot(detector.x-270,detector.y-(280+(+ui.gap.value)/2))*.01,delta=Math.abs(d1-d2),ratio=delta/lambda,amplitude=Math.abs(Math.cos(PI*ratio));return {f,lambda,d1,d2,delta,ratio,amplitude,intensity:amplitude**2};}
+function updateSound(){if(!soundOn||!audioCtx)return;const r=soundReading();oscillator.frequency.setTargetAtTime(r.f,audioCtx.currentTime,.03);soundGain.gain.setTargetAtTime(r.amplitude*.10,audioCtx.currentTime,.025)}
+function stopSound(){soundOn=false;if(soundGain&&audioCtx)soundGain.gain.setTargetAtTime(0,audioCtx.currentTime,.02);$('soundToggle').textContent='播放偵測器聲音';}
+$('soundToggle').onclick=async()=>{if(soundOn){stopSound();return}try{if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();oscillator=audioCtx.createOscillator();soundGain=audioCtx.createGain();soundGain.gain.value=0;oscillator.connect(soundGain);soundGain.connect(audioCtx.destination);oscillator.start()}await audioCtx.resume();soundOn=true;updateSound();$('soundToggle').textContent='停止聲音';$('soundStatus').textContent='正在播放偵測器收到的合成聲音；拖曳可比較音量。'}catch(e){$('soundStatus').textContent='瀏覽器未允許播放聲音，可繼續看偵測數值。'}};
+function drawSound(){
+ const r=soundReading(),p=params(),period=(r.lambda*100)/50;
+ for(const [i,sy] of [280-p.g/2,280+p.g/2].entries()){const col=i?'#ff8bb7':'#52d5f0';cohorts(period,20,age=>circle(270,sy,50*age,col,2));dot(270,sy,col,6);text('聲源 '+(i?'B':'A'),165,sy-10,col,19);line(270,sy,detector.x,detector.y,col,1,[6,6]);}
+ const x=detector.x,y=detector.y;circle(x,y,18,'#ffd072',3);line(x-10,y+21,x+10,y+21,'#ffd072',3);line(x,y+18,x,y+27,'#ffd072',3);text('偵測器',x+25,y-12,'#ffd072',20);
+ text('等振幅模型・聲速 343 m/s・圖面 100 單位 = 1 m',20,32,'#eef7ff',20);
+ const level=r.amplitude<.05?'接近相消':r.amplitude>.98?'接近相長':'部分干涉';
+ $('formula').innerHTML=`λ = ${r.lambda.toFixed(3)} m<br>A 路徑 ${r.d1.toFixed(3)} m<br>B 路徑 ${r.d2.toFixed(3)} m<br>路徑差 / λ = ${r.ratio.toFixed(2)}<br>合成振幅（相對 2A） ${(r.amplitude*100).toFixed(0)}%<br>相對強度 ${(r.intensity*100).toFixed(0)}%<br>${level}`;
+ c.dataset.sound=JSON.stringify({...r,x,y});$('soundFrequencyOut').textContent=r.f+' Hz';updateSound();
+}
+function pointerPosition(e){const rect=c.getBoundingClientRect();return {x:(e.clientX-rect.left)*W/rect.width,y:(e.clientY-rect.top)*H/rect.height}}
+c.addEventListener('pointerdown',e=>{if(mode!=='sound')return;let p=pointerPosition(e);if(Math.hypot(p.x-detector.x,p.y-detector.y)<45){dragging=true;c.setPointerCapture(e.pointerId);e.preventDefault()}});
+c.addEventListener('pointermove',e=>{if(!dragging||mode!=='sound')return;let p=pointerPosition(e);detector={x:Math.max(20,Math.min(970,p.x)),y:Math.max(60,Math.min(510,p.y))};draw();});
+for(const ev of ['pointerup','pointercancel'])c.addEventListener(ev,()=>dragging=false);
+c.addEventListener('keydown',e=>{if(mode!=='sound'||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();detector.x=Math.max(20,Math.min(970,detector.x+(e.key==='ArrowRight'?5:e.key==='ArrowLeft'?-5:0)));detector.y=Math.max(60,Math.min(510,detector.y+(e.key==='ArrowDown'?5:e.key==='ArrowUp'?-5:0)));draw();});
+function laserIntensity(y,lambda,d,D){const sin=Math.sin(Math.atan2(y,D)),phase=PI*d*sin/lambda,beta=PI*0.00004*sin/lambda;const envelope=Math.abs(beta)<1e-9?1:(Math.sin(beta)/beta)**2;return Math.cos(phase)**2*envelope;}
+function laserRGB(nm){let r=0,g=0,b=0;if(nm<440){r=(440-nm)/60;b=1}else if(nm<490){g=(nm-440)/50;b=1}else if(nm<510){g=1;b=(510-nm)/20}else if(nm<580){r=(nm-510)/70;g=1}else if(nm<645){r=1;g=(645-nm)/65}else r=1;return '#'+[r,g,b].map(v=>Math.round(255*Math.max(0,Math.min(1,v))).toString(16).padStart(2,'0')).join('')}
+function linearToDisplay(v){v=Math.max(0,Math.min(1,v));return Math.round(255*(v<=.0031308?12.92*v:1.055*v**(1/2.4)-.055))}
+function laserSample(y){const d=+ui.slitDistance.value/1000,D=+ui.screenDistance.value,dual=ui.laserCompare.checked,nm=+ui.laserLambda.value,shift=+ui.laserShift.value/1000;const red=dual?laserIntensity(y,650e-9,d,D):0,green=dual?laserIntensity(y-shift,532e-9,d,D):0,single=dual?0:laserIntensity(y,nm*1e-9,d,D);return {red,green,single,total:red+green+single}}
+function laserPixel(y,x){const dual=ui.laserCompare.checked,sep=+ui.laserSeparation.value*1.3,cx=850,half=38,sample=laserSample(y);let rgb=[0,0,0];
+ if(dual){if(Math.abs(x-(cx-sep/2))<=half)rgb[0]=sample.red;if(Math.abs(x-(cx+sep/2))<=half)rgb[1]=sample.green;}
+ else if(Math.abs(x-cx)<=half){const hex=laserRGB(+ui.laserLambda.value);rgb=[0,1,2].map(i=>parseInt(hex.slice(1+i*2,3+i*2),16)/255*sample.single)}
+ return rgb.map(linearToDisplay);
+}
+function drawLaser(){
+ const nm=+ui.laserLambda.value,d=+ui.slitDistance.value/1000,D=+ui.screenDistance.value,dual=ui.laserCompare.checked,sep=+ui.laserSeparation.value*1.3,probe=+ui.laserProbe.value/1000;
+ const top=95,bottom=475,height=bottom-top,mid=(top+bottom)/2,wall=145,halfGap=d/.00035*30,ys=[mid-halfGap,mid+halfGap],plotX=465,unitWidth=95,scrLeft=710,scrRight=985,cx=850;
+ text('① 雙縫出射波',20,35,'#eef7ff',22);text('② 強度 I(y)',465,35,'#eef7ff',22);text('③ 屏幕條紋',760,35,'#eef7ff',22);
+ line(wall,top,wall,ys[0]-8,'#e8f3fa',4);line(wall,ys[0]+8,wall,ys[1]-8,'#e8f3fa',4);line(wall,ys[1]+8,wall,bottom,'#e8f3fa',4);
+ const colors=dual?[{nm:650,color:'#ff6672'},{nm:532,color:'#53f68a'}]:[{nm,color:laserRGB(nm)}];
+ for(const source of colors){const period=(source.nm/10)/50,tau=t+8;clipping(20,top,wall-25,height,()=>{for(let j=Math.floor(tau/period)-15;j<=Math.floor(tau/period)+15;j++){const x=wall+50*(tau-j*period);if(x<wall)line(x,top+5,x,bottom-5,source.color,1.3)}});
+ clipping(wall+3,top,300,height,()=>{for(const y of ys){for(let j=Math.max(0,Math.floor(tau/period)-12);j<=Math.floor(tau/period);j++)arc(wall,y,50*(tau-j*period),-PI/2,PI/2,source.color,1.3);dot(wall,y,source.color,4)}});}
+ // A shared screen position is used by the graph, guide and fringe pixels.
+ const yAt=py=>(mid-py)/height*.02;
+ line(plotX,top-8,plotX,bottom+8,'#aebfd1',1);for(let v=0;v<=2;v++){text(String(v),plotX+v*unitWidth-5,top-18,'#aebfd1',17);line(plotX+v*unitWidth,top,plotX+v*unitWidth,bottom,'#71819644',1,[3,7])}
+ function profile(field,color){ctx.beginPath();for(let py=top;py<=bottom;py++){const I=laserSample(yAt(py))[field],x=plotX+unitWidth*I;if(py===top)ctx.moveTo(x,py);else ctx.lineTo(x,py)}ctx.strokeStyle=color;ctx.lineWidth=2.2;ctx.stroke()}
+ if(dual){profile('red','#ff6672');profile('green','#53f68a');if(sep<76)profile('total','#ffe382')}else profile('single',colors[0].color);
+ ctx.fillStyle='#050b13';ctx.fillRect(scrLeft,top,scrRight-scrLeft,height+1);
+ // Add light in linear channels, then convert once to display values. No CSS-alpha averaging.
+ for(let py=top;py<=bottom;py++){const sample=laserSample(yAt(py));if(dual){const left=cx-sep/2-38,right=cx+sep/2-38;const ranges=[left,left+76,right,right+76].sort((a,b)=>a-b);for(let k=0;k<3;k++){const x0=ranges[k],x1=ranges[k+1];if(x1-x0<.001)continue;const x=(x0+x1)/2,r=Math.abs(x-(cx-sep/2))<=38?sample.red:0,g=Math.abs(x-(cx+sep/2))<=38?sample.green:0;if(!r&&!g)continue;ctx.fillStyle=`rgb(${linearToDisplay(r)},${linearToDisplay(g)},0)`;ctx.fillRect(x0,py,x1-x0,1)}}else{const rgb=laserPixel(yAt(py),cx);ctx.fillStyle=`rgb(${rgb.join(',')})`;ctx.fillRect(cx-38,py,76,1)}}
+ text(dual?(sep<1?'紅＋綠重合':sep<76?'部分重合':'紅光　　　 綠光'):nm+' nm',760,75,dual?'#ffe382':colors[0].color,18);
+ text('+10 mm',scrRight-82,top-5,'#aebfd1',16);text('−10 mm',scrRight-82,bottom+27,'#aebfd1',16);
+ // Position follows the same millimetre ruler throughout; the left rays are schematic paths to that screen point.
+ const py=mid-probe/.02*height,sample=laserSample(probe);
+ for(const y of ys)line(wall+3,y,442,py,'#ffd07299',1.3,[6,6]);
+ line(442,py,scrRight,py,'#ffffffaa',1,[4,5]);
+ for(const [field,color] of dual?[['red','#ff6672'],['green','#53f68a'],...(sep<76?[['total','#ffe382']]:[])]:[['single',colors[0].color]])dot(plotX+unitWidth*sample[field],py,color,4);
+ text('同一屏幕位置 y = '+(+ui.laserProbe.value).toFixed(1)+' mm',460,535,'#ffd072',18);
+ text('波前間距放大；中、右按實際光學條件',20,512,'#aebfd1',16);
+ $('laserMixControls').classList.toggle('hidden',!dual);$('laserSeparationOut').textContent=ui.laserSeparation.value+'%';$('laserShiftOut').textContent=(+ui.laserShift.value).toFixed(1)+' mm';$('laserProbeOut').textContent=(+ui.laserProbe.value).toFixed(1)+' mm';
+ $('formula').innerHTML='條紋間距 Δy ≈ λD / d<br>本色 Δy ≈ '+(nm*1e-9*D/d*1000).toFixed(2)+' mm<br>'+(dual?`I紅 = ${sample.red.toFixed(2)}<br>I綠 = ${sample.green.toFixed(2)}<br>${sep<76?`重合區 I = ${sample.total.toFixed(2)}`:"條紋尚未重合"}<br>黃線為重合區的總強度；重合處做色光加成。`:`此位置 I = ${sample.single.toFixed(2)}`);
+ c.dataset.laser=JSON.stringify({dual,separation:+ui.laserSeparation.value,probe,py,plotX,unitWidth,screenCenter:cx,sample,overlap:sep<76,screenColor:laserPixel(probe,cx)});
+}
+function draw(){let p=params();c.dataset.measurements='[]';ctx.clearRect(0,0,W,H);const f=['interference','diffraction','laser','sound'].includes(mode);$('lineLegend').classList.toggle('hidden',f);$('fieldLegend').classList.toggle('hidden',!f);$('fieldLegend').innerHTML=mode==='diffraction'?'<span class=cyan>━━ 疊加後的新波前</span><span class=gold>細弧：取樣子波</span>':mode==='laser'?'圓弧：次級波　紅／綠線：各色強度　黃線：重合區強度總和　虛線：同一屏幕位置':mode==='sound'?'<span class=cyan>━━ 聲源 A</span><span class=pink>━━ 聲源 B</span><span class=gold>○ 聲音偵測器</span>':'<span class=cyan>━━ 波源 A</span><span class=pink>━━ 波源 B</span><span class=gold>┄ 等路徑線</span>';if(mode==='plane')drawPlane(p);else if(mode==='circle')drawCircle(p);else if(mode==='refraction'||mode==='reflection')interfaceDraw(p,mode==='reflection');else if(mode==='interference')drawInterference(p);else if(mode==='diffraction')drawDiffraction(p);else if(mode==='laser')drawLaser();else drawSound()}
+function update(){ui.gap.min=mode==='diffraction'?1:40;ui.gap.max=mode==='diffraction'?1200:240;ui.gap.step=mode==='diffraction'?.001:10;let p=params(),sin2=p.r*Math.sin(p.a),a2=Math.asin(Math.min(1,sin2))*180/PI;$('lambdaOut').textContent=p.L+' 單位';$('angleOut').textContent=Math.round(p.a*180/PI)+'°';$('speedOut').textContent=p.r.toFixed(2);$('gapOut').textContent=Number(p.g.toFixed(3))+' 單位';$('caption').textContent=captions[mode];$('sourceRow').classList.toggle('hidden',mode!=='interference');$('envelopeLabel').textContent=mode==='diffraction'?'顯示疊加後的新波前':'顯示連續波前的理想包絡';$('diffractionPresets').classList.toggle('hidden',mode!=='diffraction');$('pointsRow').classList.toggle('hidden',!Object.hasOwn(pointCounts,mode));$('envelopeRow').classList.toggle('hidden',!['plane','circle','refraction','reflection','diffraction'].includes(mode));$('pointsOut').textContent=ui.points.value+' 點';$('laserControls').classList.toggle('hidden',mode!=='laser');$('soundControls').classList.toggle('hidden',mode!=='sound');$('lambda').parentElement.classList.toggle('hidden',['laser','sound'].includes(mode));$('waveletRow').classList.toggle('hidden',mode==='laser'||mode==='interference');$('laserLambdaOut').textContent=ui.laserLambda.value+' nm';$('slitDistanceOut').textContent=ui.slitDistance.value+' mm';$('screenDistanceOut').textContent=ui.screenDistance.value+' m';$('angleRow').classList.toggle('hidden',!['refraction','reflection'].includes(mode));$('speedRow').classList.toggle('hidden',mode!=='refraction');$('gapRow').classList.toggle('hidden',!['interference','diffraction','sound'].includes(mode));$('gapLabel').textContent=mode==='diffraction'?'縫寬':'波源距離';$('waveletRow').classList.toggle('hidden',['interference','laser','sound'].includes(mode));$('geometryRow').classList.toggle('hidden',!['refraction','reflection'].includes(mode));document.querySelectorAll('[role=tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.mode===mode));$('formula').innerHTML=mode==='refraction'&&sin2>1+1e-10?'全反射<br>超過臨界角，沒有傳播的折射波前。<br>θc = '+(Math.asin(1/p.r)*180/PI).toFixed(1)+'°':mode==='refraction'?`θ₂ = ${a2.toFixed(1)}°<br>λ₂ = ${Math.round(p.L*p.r)} 單位<br>sin θ₂ = (v₂ / v₁) sin θ₁<br>λ₂ / λ₁ = v₂ / v₁<br>光在均勻介質：n₁ sin θ₁ = n₂ sin θ₂`:mode==='reflection'?'θ入射 = θ反射<br>頻率、波速、波長不變':mode==='interference'?'路徑差 = 整數倍 λ：相長<br>路徑差 = 半整數倍 λ：相消':mode==='diffraction'?`縫寬 / 波長 = ${(p.g/p.L).toFixed(2)}<br>此圖展示縫內子波；新波前由連續縫口的純量波疊加計算`: '波速 v = 頻率 f × 波長 λ<br>相鄰波峰波前間距 = λ';draw()}
+window.wavePhysics={aperturePhasor,laserIntensity,laserSample,laserPixel};for(const [id,ratio] of [['slitNarrow',.125],['slitEqual',1],['slitWide',8]])$(id).onclick=()=>{ui.gap.value=+ui.lambda.value*ratio;t=0;update()};
+document.querySelectorAll('[role=tab]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;if(mode!=='diffraction')ui.gap.value=Math.min(240,Math.max(40,+ui.gap.value));if(Object.hasOwn(pointCounts,mode))ui.points.value=pointCounts[mode];stopSound();t=0;markTracks={};fieldKey='';update()}));Object.values(ui).forEach(el=>el.addEventListener('input',()=>{markTracks={};if(el===ui.points)pointCounts[mode]=+el.value;if(el===ui.laserColor){ui.laserCompare.checked=false;if(el.value!=='custom')ui.laserLambda.value=el.value==='red'?650:532;}if(el===ui.laserLambda){ui.laserCompare.checked=false;ui.laserColor.value='custom';}update()}));$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'暫停':'播放'};$('step').onclick=()=>{playing=false;$('play').textContent='播放';t+=.15;draw()};$('reset').onclick=()=>{ui.lambda.value=80;ui.angle.value=35;ui.speed.value=.7;ui.gap.value=140;ui.wavelets.checked=true;ui.geometry.checked=true;ui.sourceView.value='both';ui.laserSeparation.value=100;ui.laserShift.value=0;ui.laserProbe.value=0;ui.points.value=pointCounts[mode]||13;ui.envelope.checked=true;detector={x:760,y:280};stopSound();markTracks={};t=0;update()};function loop(ms){if(last&&playing){t+=Math.min(.05,(ms-last)/1000);draw()}last=ms;requestAnimationFrame(loop)}update();requestAnimationFrame(loop);
+})();</script></body></html>
