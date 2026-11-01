@@ -27,3 +27,19 @@
 - [OpenStax：Young雙縫干涉](https://openstax.org/books/university-physics-volume-3/pages/3-1-youngs-double-slit-interference)
 - [OpenStax：雙縫與單縫包絡](https://openstax.org/books/university-physics-volume-3/pages/4-3-double-slit-diffraction)
 - [UNSW Physclips：色光加成](https://www.animations.physics.unsw.edu.au/jw/light/colour-mixing.htm)
+
+
+## 簡報情境連結
+
+每個網址直接開啟指定情境。切換情境時網址同步更新，可複製到簡報。
+
+- [平面波](https://leway1980.github.io/huygens-wave-lab/#plane)
+- [圓形波](https://leway1980.github.io/huygens-wave-lab/#circle)
+- [折射與司乃耳定律](https://leway1980.github.io/huygens-wave-lab/#refraction)
+- [反射](https://leway1980.github.io/huygens-wave-lab/#reflection)
+- [雙波源干涉](https://leway1980.github.io/huygens-wave-lab/#interference)
+- [單縫繞射](https://leway1980.github.io/huygens-wave-lab/#diffraction)
+- [聲音干涉與偵測器](https://leway1980.github.io/huygens-wave-lab/#sound)
+- [雷射雙縫干涉](https://leway1980.github.io/huygens-wave-lab/#laser)
+
+聲音仍需按播放按鈕才會啟動。
