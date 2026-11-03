@@ -14,13 +14,19 @@ for(const L of [45,80,120])for(const ratio of [.125,1,8])for(const [x,y] of [[5,
 }
 assert(maxConvergence<.005,`P convergence ${maxConvergence}`);checked++;
 for(const L of [45,80,120])for(const [x,y] of [[20,80],[80,-200],[400,80],[600,200]]){const a=propagatedPhasor(x,y,80,L,'edge'),b=propagatedPhasor(x,y,80,L,'edge',16384);assert(Math.hypot(a[0]-b[0],a[1]-b[1])<.012);checked++}
-vm.runInContext(script.slice(script.indexOf('function filmReflectance('),script.indexOf('// Equal-energy'))+';this.daily={filmReflectance,arrayIntensity,gratingAngle,newtonThickness,moirePeriod,dopplerFrequency};',ctx);
+vm.runInContext(script.slice(script.indexOf('function filmReflectance('),script.indexOf('// Equal-energy'))+';this.daily={filmReflectance,filmPhasors,arrayIntensity,gratingAngle,newtonThickness,dopplerFrequency,acousticObserved,relativisticRatio};',ctx);
 const d=ctx.daily;
 near(d.filmReflectance(532,0,1,1.33,1),0,1e-12);near(d.filmReflectance(532,0,1.52,1,1.52),0,1e-12);near(d.filmReflectance(532,0,1,1.46,1.33),((1-1.33)/(1+1.33))**2,1e-12);
 for(const stack of [[1,1.33,1],[1,1.46,1.33],[1.52,1,1.52]])for(const nm of [400,532,700])for(const h of [0,67,100,400,1000])for(const angle of [0,15,35]){const R=d.filmReflectance(nm,h,...stack,angle);assert(R>=-1e-12&&R<=1+1e-12);checked++}
 for(const order of [0,1,2,3,8]){const r=Math.sqrt(order*.532);near(d.filmReflectance(532,d.newtonThickness(r,1),1.52,1,1.52),0,1e-10)}
 for(const [nm,expected] of [[400,14.477512],[550,20.10551],[700,25.94448]]){near(d.gratingAngle(nm,1600),expected,.0001);near(d.arrayIntensity(nm,1600,d.gratingAngle(nm,1600)),1,1e-12)}
 assert.equal(d.gratingAngle(700,600),null);
-assert.equal(d.moirePeriod(12,12,0),Infinity);near(d.moirePeriod(12,12.12,0),1212,1e-7);near(d.moirePeriod(12,12,3),12/(2*Math.sin(1.5*Math.PI/180)),1e-10);
 near(d.dopplerFrequency(440,0,true),440);near(d.dopplerFrequency(440,0,false),440);near(d.dopplerFrequency(440,.25,true),586.666666667,1e-7);near(d.dopplerFrequency(440,.25,false),352);
-console.log(JSON.stringify({result:'PASS',assertions:checked,maxComplexConvergence:maxConvergence,centralYAtT0:first,centralYAtT05:later,thinFilm:'zero-thickness, bounds, Newton radii',daily:'grating angles, moire periods, Doppler'},null,2));
+near(d.acousticObserved(440,0,-34.3),484);near(d.acousticObserved(440,0,34.3),396);near(d.acousticObserved(440,85.75,0),586.6666667,1e-6);near(d.acousticObserved(440,0,-85.75),550);near(d.acousticObserved(440,34.3,34.3),440);
+near(d.relativisticRatio(-.6),.5);near(d.relativisticRatio(.6),2);near(d.relativisticRatio(0),1);
+for(const stack of [[1,1.33,1],[1,1.46,1.33],[1.52,1,1.52]])for(const nm of [450,532,650])for(const h of [0,111.3,450,900]){const q=d.filmPhasors(nm,h,stack);near((q.a+q.bRe)**2+q.bIm**2,d.filmReflectance(nm,h,...stack),1e-12)}
+vm.runInContext(extract('freshAcoustic','syncAcoustic')+extract('acousticReception','stepAcoustic')+';this.sound={freshAcoustic,acousticReception};',ctx);
+for(const f of [150,440,700])for(const speed of [-200,0,80,200]){const s=ctx.sound.freshAcoustic({f,carSpeed:speed,observerSpeed:0,side:'front'}),period=352/f;near(s.waves.at(-1).time,0);for(let j=1;j<s.waves.length;j++)near(s.waves[j].time-s.waves[j-1].time,period,1e-10)}
+for(const [vs,vo,expected]of [[0,-34.3,484],[0,34.3,396],[85.75,0,586.66666667],[34.3,34.3,440]]){const s=ctx.sound.freshAcoustic({f:440,carSpeed:vs,observerSpeed:vo,side:'front'});near(ctx.sound.acousticReception(s).frequency,expected,1e-6)}
+const transition=ctx.sound.freshAcoustic({f:440,carSpeed:0,observerSpeed:0,side:'front'});transition.clock=1;transition.vs=80/343*110;transition.segments.push({t:1,x:transition.xs,vs:transition.vs,f:440});near(ctx.sound.acousticReception(transition).frequency,440);transition.clock=10;transition.xs=190+9*transition.vs;near(ctx.sound.acousticReception(transition).frequency,440*343/(343-80));
+console.log(JSON.stringify({result:'PASS',assertions:checked,maxComplexConvergence:maxConvergence,centralYAtT0:first,centralYAtT05:later,thinFilm:'complex phase waves equal Airy reflectance; zero-thickness, bounds, Newton radii',daily:'grating angles, independent source/observer acoustic motion, relativistic red/blue shifts'},null,2));
