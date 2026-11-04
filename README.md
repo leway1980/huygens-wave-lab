@@ -112,3 +112,12 @@ node smoke.cjs
 - 馬赫錐是弱擾動／弱激波教學近似，未模擬機形決定的有限強度激波、地面反射或大氣折射。人物放大，接收位置以腳下地面黃點表示；圖上的波前稀疏取樣，音調與短 N 形音爆皆為教學合成。
 - 參考：NASA Mach Angle（https://www.grc.nasa.gov/WWW/K-12/airplane/machang.html ）與 Sound Wave Applet（https://www.grc.nasa.gov/www/k-12/airplane/sndwave.html ）。
 - 驗證：1004 項既有物理斷言、16 情境 142 項操作檢查、`jet-check.cjs` 467 項延遲時間／馬赫幾何／音爆與音訊節點檢查；原生 Canvas 繪圖與 Chrome 實際頁面、控制與 Web Audio 啟用驗證。未以麥克風量測喇叭輸出。
+
+
+## 2026-11-04：掠空引擎泛音與音訊啟用修正
+- 預設改為 220 Hz 引擎基頻、八個整數倍頻成分（相對振幅 1、0.64、0.40、0.26、0.18、0.12、0.08、0.05），疊加經低通處理的寬頻噴流轟鳴。泛音隨延遲時間求得的都卜勒比例一起移動；噪音播放速率與頻譜也隨之改變，遠距離高頻較弱。
+- 可切換「引擎聲」與「純音」以比較音色和基頻。圖表與上方讀值標為基頻；沒有宣稱合成音色對應特定機型。音量採教學正規化，保留遠近變化並提升遠處可聽度。
+- 開啟聲音時重新飛過並開始播放，避免飛行已結束或暫停造成無聲。新增音訊狀態文字；瀏覽器未啟動音訊時顯示重試提示。
+- 延遲時間、馬赫錐與音爆觸發條件沿用；超音速波未到達前仍不播放引擎聲。
+- 參考：NASA Core-Noise Research（https://ntrs.nasa.gov/api/citations/20150010125/downloads/20150010125.pdf ）中引擎寬頻與音調成分的分類；Web Audio PeriodicWave（https://developer.mozilla.org/en-US/docs/Web/API/BaseAudioContext/createPeriodicWave ）。
+- 驗證：既有 1004 項物理斷言、16 情境 142 項操作檢查、478 項飛行／音訊檢查；Chrome 確認 AudioContext 為 running、音色切換、暫停靜音，以及飛行結束後重新啟用聲音會重飛。沒有以麥克風量測喇叭輸出或校準真機音色。
