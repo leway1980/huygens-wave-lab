@@ -87,3 +87,10 @@ node smoke.cjs
 - [StarTrek.com：官方曲速介紹](https://www.startrek.com/news/star-trek-101-give-me-warp-three-mr-sulu)
 - [Paramount《TNG Writers’ Technical Manual》第四季版，第7–9頁](https://engineering.thetafleet.net/Journals/TNG/Franchise%20-%20Star%20Trek%20TNG%20Writer%27s%20Technical%20Manual%20%28fourth%20season%29.pdf)
 
+
+
+## 2026-11-04 艦橋前視窗景
+
+版本 `20261104-cockpit-4`：曲速時上方太陽採電影配色，接近偏藍、遠離偏橘紅，隨曲速級數調整色調強度。星軌改為由前方消失點向四周放射；接近時向外流動、遠離時反向收束。下方保留企業號側視航行效果。
+
+此處配色與星軌為明示的電影演出，沒有把超光速代入相對論公式；亞光速模型保持原計算。既有15情境／104項操作檢查通過；另以原始教具程式配原生Canvas渲染，核對兩種配色、前視投影與窗景時間變化。瀏覽器連線因當次環境啟動失敗，未宣稱完成瀏覽器目視驗收。
