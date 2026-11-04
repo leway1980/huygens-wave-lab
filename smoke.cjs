@@ -8,7 +8,7 @@ for(const m of html.matchAll(/<input\b([^>]+)>/g)){const id=m[1].match(/id="([^"
 for(const m of html.matchAll(/<select\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/select>/g)){const options=[...m[2].matchAll(/<option value="([^"]+)"[^>]*>([^<]+)<\/option>/g)].map(v=>({value:v[1],textContent:v[2]}));els[m[1]].value=options[0]?.value;Object.defineProperty(els[m[1]],'selectedOptions',{get(){return [options.find(o=>o.value===this.value)]}})}
 let frame;const scope={document:{body:{classList:classes},getElementById:id=>{if(!els[id])throw Error('Missing DOM '+id);return els[id]},querySelector:()=>element('query'),querySelectorAll:()=>[],createElement:()=>element('new'),title:''},location:{hash:'#plane'},history:{pushState(a,b,hash){scope.location.hash=hash}},requestAnimationFrame:cb=>{frame=cb},console,Math,Float32Array,Float64Array,window:{addEventListener(){}}};
 vm.createContext(scope);vm.runInContext(source,scope);
-const modes=['plane','circle','refraction','reflection','interference','diffraction','sound','laser','spider','cd','newton','oil','bubble','doppler','lightdoppler'];let time=1000,checks=0;
+const modes=['plane','circle','refraction','reflection','interference','diffraction','sound','laser','spider','cd','newton','oil','bubble','doppler','lightdoppler','jet'];let time=1000,checks=0;
 function fire(id,type='input',data={}){for(const cb of els[id].events[type]||[])cb({preventDefault(){},...data});checks++}
 function tick(n=3){for(let j=0;j<n;j++){time+=50;frame(time)}}
 for(const mode of modes){els.modeSelect.value=mode;fire('modeSelect','change');tick();assert.equal(els.wave.dataset.mode,mode);checks++;
