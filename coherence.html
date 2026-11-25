@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>同調與干涉｜水波槽與雙狹縫</title>
+<style>
+:root{color-scheme:dark;--bg:#0e192a;--panel:#15263a;--well:#0a1525;--line:#31475f;--fg:#eef7ff;--muted:#b6c9db;--cyan:#6cddf5;--pink:#ff99c4;--gold:#ffe1a0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,"Microsoft JhengHei",sans-serif}
+main{max-width:1460px;margin:auto;padding:clamp(12px,2.2vw,30px)}
+h1{margin:0;font-size:clamp(28px,4vw,43px);line-height:1.18}
+.lead{margin:6px 0 16px;color:var(--muted);font-size:clamp(14px,2vw,18px)}
+.toolbar,.modes,.actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.toolbar{justify-content:space-between;margin:0 0 10px}
+button{font:inherit;color:var(--fg);border:1px solid #45627b;background:#213951;border-radius:8px;padding:7px 13px;cursor:pointer}
+button[aria-pressed=true]{background:#11647b;border-color:#7addee}
+button:hover{border-color:var(--cyan)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.controls{display:grid;grid-template-columns:1fr 1fr minmax(140px,.7fr);gap:12px 25px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin-bottom:14px}
+.controls label{display:flex;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted)}
+output{color:var(--fg);font-variant-numeric:tabular-nums}
+input[type=range]{display:block;width:100%;height:24px;margin:2px 0;accent-color:var(--cyan)}
+.compare{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.card{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:clamp(10px,1.3vw,17px)}
+.card header{display:grid;grid-template-columns:max-content minmax(0,1fr);align-items:start;gap:5px 12px;margin-bottom:8px}
+.equations{min-width:0;padding-left:10px;border-left:1px solid #42627b;line-height:1.4}
+.wave-equation{display:block;font:600 clamp(14px,1.6vw,19px)/1.4 "Cambria Math","STIX Two Text",serif}
+.wave-equation sub{font-size:.72em}
+.phase-term{color:var(--gold)}
+h2{margin:0;font-size:24px;line-height:1.25}
+.phase-tag{display:block;margin-top:4px;font-size:13px;color:var(--gold);font-variant-numeric:tabular-nums}
+.figure-title{font-size:14px;color:var(--muted);margin:11px 0 5px;font-weight:600}
+canvas{width:100%;display:block;background:var(--well);border-radius:7px}
+.legend{display:flex;gap:8px 16px;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--muted)}
+.cyan{color:var(--cyan)}.pink{color:var(--pink)}
+.strips{display:grid;grid-template-columns:1fr;gap:7px}
+.strip label{display:block;margin:0 0 3px;font-size:14px}
+.strip canvas{border:1px solid #425770;height:28px}
+.note{margin:9px 0 0;color:var(--muted);font-size:14px}
+.claim{margin:14px 0 0;padding:11px 13px;border-left:3px solid var(--gold);background:#192d44;border-radius:4px}
+details{margin-top:12px;color:var(--muted);font-size:14px}
+summary{cursor:pointer;color:var(--fg)}
+details p{margin:6px 0}
+a{color:var(--cyan)}
+@media(min-width:721px){.signals,.setup{max-width:480px;margin-inline:auto}.strips{grid-template-columns:1fr 1fr;gap:10px}.strip canvas{height:30px}.card .figure-title{margin-top:8px}}
+@media(max-width:720px){.compare{grid-template-columns:1fr}.controls{grid-template-columns:1fr}.card{padding:11px}}
+</style>
+</head>
+<body>
+<main>
+<h1>同調與干涉</h1>
+<p class="lead">比較波源的相位差，再看條紋能不能留在原位。</p>
+<div class="toolbar">
+ <div class="modes" role="group" aria-label="實驗情境">
+  <button id="water" type="button" aria-pressed="true">水波槽</button>
+  <button id="light" type="button" aria-pressed="false">光的雙狹縫</button>
+ </div>
+ <div class="actions" aria-label="播放控制">
+  <button id="play" type="button">播放</button>
+  <button id="step" type="button">單步</button>
+  <button id="reset" type="button">回到起點</button>
+ </div>
+</div>
+<div class="controls">
+ <div>
+  <label for="time">演示時間 <output id="timeOut" for="time" aria-live="off">0.00 秒</output></label>
+  <input id="time" type="range" min="0" max="8" step="0.01" value="0">
+ </div>
+ <div>
+  <label for="offset">左圖的固定相位差 <output id="offsetOut" for="offset">0°</output></label>
+  <input id="offset" type="range" min="0" max="360" step="15" value="0">
+ </div>
+ <div>
+  <label for="speed">播放速度 <output id="speedOut" for="speed">0.25×</output></label>
+  <input id="speed" type="range" min="0.05" max="10" step="0.05" value="0.25">
+ </div>
+</div>
+<div class="compare" id="compare"></div>
+<p id="claim" class="claim"></p>
+<details>
+ <summary>式子怎麼讀、模型與參考</summary>
+ <p>r<sub>A</sub>、r<sub>B</sub> 是各波源到觀察點的距離，k = 2π/λ，ω = 2πf，v 是波速。看波源本身時代入 r = 0。看遠處時，B 波在先前的 t − r<sub>B</sub>/v 發出，因此不同調那側用這個時間來讀取相位差。</p>
+ <p>兩源採相同基準波長與等振幅。右圖的第二個波源會慢慢改變相位，以有限週期模擬不穩定的相位差。畫面用慢動作示意，距離和時間皆為演示比例。</p>
+ <p>圖中的青色與粉色用來區分兩個波源。光屏的亮度是相對光強。水波槽的觀察線則以振幅平方的平均表示振動強弱。示意略去單縫繞射包絡、幾何衰減和水槽反射。</p>
+ <p><a href="https://openstax.org/books/university-physics-volume-3/pages/3-1-youngs-double-slit-interference" target="_blank" rel="noopener">OpenStax｜楊氏雙狹縫干涉</a></p>
+</details>
+</main>
+<template id="card">
+ <section class="card">
+  <header>
+   <h2></h2>
+   <div class="equations">
+    <span class="wave-equation cyan"></span>
+    <span class="wave-equation pink"></span>
+    <span class="phase-tag"></span>
+   </div>
+  </header>
+  <div class="figure-title">波源 A、B 在各自源點的振動</div>
+  <canvas class="signals" width="560" height="108" role="img" aria-label="兩個波源的振動曲線，右端為現在"></canvas>
+  <div class="figure-title setup-title"></div>
+  <canvas class="setup" width="560" height="238" role="img" aria-label="兩波源、傳播波前與觀察位置"></canvas>
+  <div class="legend"><span class="cyan">━ A 的波峰</span><span class="pink">━ B 的波峰</span><span class="setup-key"></span></div>
+  <div class="figure-title result-title"></div>
+  <div class="strips">
+   <div class="strip"><label>短時間觀察</label><canvas class="short" width="560" height="32" role="img"></canvas></div>
+   <div class="strip"><label>長時間平均</label><canvas class="long" width="560" height="32" role="img"></canvas></div>
+  </div>
+  <p class="note"></p>
+ </section>
+</template>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const W=560,H=238,TAU=2*Math.PI;
+const SPEED=144,LAMBDA=24,OMEGA=TAU*SPEED/LAMBDA;
+const BLOCK=.72,ORDER=[3,1,2,4,7,5,6,0],PHASE_CYCLE=ORDER.length*BLOCK;
+const TIMELINE_SPAN=8;
+const A='#6cddf5',B='#ff99c4';
+const setups={
+ water:{x:155,ay:62,by:176,screen:505,name:'水波槽俯視',receiver:'取樣線'},
+ light:{x:108,ay:47,by:191,screen:505,name:'雙狹縫俯視',receiver:'屏幕'}
+};
+let scene='water',time=0,horizon=TIMELINE_SPAN,speed=.25,playing=false,last=0;
+function phaseAt(t,coherent,offset){
+ if(coherent)return offset;
+ const block=Math.floor(t/BLOCK),index=((block%ORDER.length)+ORDER.length)%ORDER.length;
+ const fraction=t/BLOCK-block;
+ const start=ORDER[index],next=ORDER[(index+1)%ORDER.length];
+ const shortest=((next-start+12)%8)-4;
+ const q=Math.max(0,(fraction-.70)/.30);
+ return (start+shortest*q*q*(3-2*q))*TAU/8;
+}
+function phaseOf(t,delay,second,coherent,offset){
+ const emitted=t-delay;
+ return OMEGA*emitted+(second?phaseAt(emitted,coherent,offset):0);
+}
+function screenDelays(p,y){
+ return [Math.hypot(p.screen-p.x,y-p.ay)/SPEED,Math.hypot(p.screen-p.x,y-p.by)/SPEED];
+}
+function averageIntensity(t,da,db,coherent,offset,window,samples){
+ const pathPhase=OMEGA*(da-db);
+ if(coherent)return (1+Math.cos(pathPhase+offset))/2;
+ let sum=0;
+ for(let i=0;i<samples;i++){
+  const when=t-window*(i+.5)/samples;
+  sum+=Math.cos(pathPhase+phaseAt(when-db,false,offset));
+ }
+ return .5+.5*sum/samples;
+}
+function line(ctx,x0,y0,x1,y1,color,width=1){
+ ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
+}
+function label(ctx,text,x,y,color='#c7d9eb',size=16){
+ ctx.font='600 '+size+'px system-ui, Microsoft JhengHei';ctx.fillStyle=color;ctx.fillText(text,x,y);
+}
+function ring(ctx,x,y,r,from,to,color,width=1.2){
+ if(r<=0)return;
+ ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.arc(x,y,r,from,to);ctx.stroke();
+}
+function dot(ctx,x,y,r,color){
+ ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();
+}
+function paintSignals(ctx,coherent,offset){
+ ctx.clearRect(0,0,W,108);
+ line(ctx,43,32,526,32,'#28445e');line(ctx,43,75,526,75,'#28445e');
+ label(ctx,'A',15,37,A);label(ctx,'B',15,81,B);
+ line(ctx,526,13,526,89,'#b5cbe1');
+ label(ctx,'現在',505,103,'#aebfd3',13);
+ const width=483,span=.70;
+ for(const [second,cy,color] of [[false,32,A],[true,75,B]]){
+  ctx.strokeStyle=color;ctx.lineWidth=2.2;ctx.beginPath();
+  for(let x=0;x<=width;x+=3){
+   const y=cy-13*Math.cos(phaseOf(time-span+span*x/width,0,second,coherent,offset));
+   if(x===0)ctx.moveTo(43,y);else ctx.lineTo(x+43,y);
+  }
+  ctx.stroke();
+  dot(ctx,526,cy-13*Math.cos(phaseOf(time,0,second,coherent,offset)),3.5,color);
+ }
+}
+function crestRadii(t,second,coherent,offset){
+ const radii=[];
+ let prev=Math.sin(phaseOf(t,0,second,coherent,offset));
+ for(let r=2;r<590;r+=2){
+  const phase=phaseOf(t,r/SPEED,second,coherent,offset),now=Math.sin(phase);
+  if(prev>=0&&now<0&&Math.cos(phase)>0)radii.push(r-2+2*prev/(prev-now));
+  prev=now;
+ }
+ return radii;
+}
+function waterGrid(p){
+ const cells=[];
+ for(let y=8;y<H-4;y+=5)for(let x=9;x<p.screen;x+=5){
+  cells.push([x,y,Math.hypot(x-p.x,y-p.ay)/SPEED,Math.hypot(x-p.x,y-p.by)/SPEED]);
+ }
+ return cells;
+}
+const cells=waterGrid(setups.water);
+function paintTank(ctx,p,coherent,offset){
+ for(const [x,y,da,db] of cells){
+  const value=(Math.cos(phaseOf(time,da,false,coherent,offset))+Math.cos(phaseOf(time,db,true,coherent,offset)))/2;
+  const level=Math.round(Math.abs(value)*9);
+  if(!level)continue;
+  ctx.fillStyle=value>0?'rgba(118,190,250,'+(level*.035)+')':'rgba(50,113,175,'+(level*.028)+')';
+  ctx.fillRect(x,y,5,5);
+ }
+}
+function paintSetup(ctx,p,coherent,offset){
+ const light=scene==='light';
+ ctx.clearRect(0,0,W,H);
+ ctx.save();
+ ctx.beginPath();ctx.rect(light?p.x:10,9,p.screen-(light?p.x:10),H-18);ctx.clip();
+ if(!light)paintTank(ctx,p,coherent,offset);
+ for(const [second,y,color] of [[false,p.ay,A],[true,p.by,B]]){
+  for(const r of crestRadii(time,second,coherent,offset)){
+   ring(ctx,p.x,y,r,light?-Math.PI/2:0,light?Math.PI/2:TAU,color+(light?'69':'4e'),1.25);
+  }
+ }
+ ctx.restore();
+ if(light){
+  for(const [start,end] of [[9,p.ay-6],[p.ay+6,p.by-6],[p.by+6,H-9]]){
+   line(ctx,p.x,start,p.x,end,'#8099b1',5);
+  }
+  label(ctx,'雙狹縫',17,124,'#c7d9eb',15);
+ }else{
+  ctx.strokeStyle='#3c5d77';ctx.lineWidth=1.5;ctx.strokeRect(9,8,W-54,H-16);
+ }
+ for(const [second,y,color] of [[false,p.ay,A],[true,p.by,B]]){
+  dot(ctx,p.x,y,8,color+'45');dot(ctx,p.x,y,4.5,color);
+  label(ctx,second?'B':'A',p.x-23,y+5,color,15);
+ }
+ ctx.save();if(!light)ctx.setLineDash([5,5]);line(ctx,p.screen,14,p.screen,H-14,light?'#eee0b1':'#cedfea',2);ctx.restore();
+ label(ctx,p.receiver,p.screen+6,123,'#e2edf7',14);
+}
+function paintStrip(ctx,p,coherent,offset,long){
+ const light=scene==='light',range=H-30,columns=140;
+ for(let i=0;i<columns;i++){
+  const y=15+range*(i+.5)/columns,[da,db]=screenDelays(p,y);
+  const value=averageIntensity(time,da,db,coherent,offset,long?PHASE_CYCLE:.10,long?64:5);
+  const q=Math.max(0,Math.min(1,value));
+  const shade=light?[12+Math.round(q*241),17+Math.round(q*220),27+Math.round(q*167)]:[10+Math.round(q*119),22+Math.round(q*190),36+Math.round(q*218)];
+  ctx.fillStyle='rgb('+shade.join(',')+')';ctx.fillRect(i*4,0,4,32);
+ }
+ ctx.fillStyle='#f4f8ff';ctx.fillRect(279,0,2,4);ctx.fillRect(279,28,2,4);
+}
+const views=[true,false].map(coherent=>{
+ const card=$('card').content.firstElementChild.cloneNode(true);
+ $('compare').append(card);
+ const find=selector=>card.querySelector(selector);
+ find('h2').textContent=coherent?'同調':'不同調';
+ return {coherent,find,signals:find('.signals').getContext('2d'),setup:find('.setup').getContext('2d'),short:find('.short').getContext('2d'),long:find('.long').getContext('2d')};
+});
+function render(){
+ const p=setups[scene],degrees=Number($('offset').value),offset=degrees*TAU/360;
+ $('time').max=horizon;
+ $('time').value=time.toFixed(2);
+ $('timeOut').textContent=time.toFixed(2)+' 秒';
+ $('offsetOut').textContent=degrees+'°';
+ for(const v of views){
+  const degreesNow=(Math.round(phaseAt(time,v.coherent,offset)*360/TAU)%360+360)%360;
+  v.find('.phase-tag').textContent=v.coherent?'Δφ₀ 固定為 '+degreesNow+'°':'源點相位差 Δφ(t) 目前為 '+degreesNow+'°';
+  paintSignals(v.signals,v.coherent,offset);
+  paintSetup(v.setup,p,v.coherent,offset);
+  paintStrip(v.short,p,v.coherent,offset,false);
+  paintStrip(v.long,p,v.coherent,offset,true);
+ }
+}
+function choose(next){
+ scene=next;
+ for(const id of ['water','light'])$(id).setAttribute('aria-pressed',String(id===scene));
+ const light=scene==='light',p=setups[scene];
+ for(const v of views){
+  const symbol=light?'E':'η',amplitude=light?'E<sub>0</sub>':'a';
+  const delta=v.coherent?'Δφ<sub>0</sub>':'Δφ(t − r<sub>B</sub>/v)';
+  v.find('.wave-equation.cyan').innerHTML=symbol+'<sub>A</sub> = '+amplitude+' cos(ωt − kr<sub>A</sub>)';
+  v.find('.wave-equation.pink').innerHTML=symbol+'<sub>B</sub> = '+amplitude+' cos(ωt − kr<sub>B</sub> + <span class="phase-term">'+delta+'</span>)';
+  v.find('.setup-title').textContent=p.name;
+  v.find('.setup-key').textContent=light?'右方豎線是屏幕':'水面明暗為瞬時起伏，虛線是取樣線';
+  v.find('.result-title').textContent=light?'屏幕亮暗（由上到下展開）':'取樣線的振動強弱（由上到下展開）';
+  v.find('.short').setAttribute('aria-label',v.coherent?'短時間仍有固定條紋':'短時間可見位置會改變的條紋');
+  v.find('.long').setAttribute('aria-label',v.coherent?'平均後仍有清楚條紋':'不同相位平均後接近均勻');
+  v.find('.note').textContent=light?(v.coherent?'同一束雷射照兩縫，兩縫之間可維持固定相位差。':'用兩束彼此不鎖相的光分別照兩縫，短時間的條紋會跑。'):(v.coherent?'同一個振動器帶動兩個點，強弱區留在固定位置。':'兩個點的相位關係變動，強弱區會移動。');
+ }
+ $('claim').textContent='同調關鍵是相位差固定。把左圖調到 180°，中央會由亮轉暗，長時間平均仍保有條紋。右圖短時間可以相長或相消，但條紋位置一直變，平均後就看不清楚。';
+ render();
+}
+function setPlaying(active){playing=active;$('play').textContent=active?'暫停':'播放';}
+function seek(next){setPlaying(false);time=Math.max(0,Math.min(horizon,next));render();}
+function advance(amount){
+ time+=amount;
+ if(time>horizon)horizon=TIMELINE_SPAN*Math.ceil(time/TIMELINE_SPAN);
+}
+$('water').onclick=()=>choose('water');
+$('light').onclick=()=>choose('light');
+$('time').oninput=()=>seek(Number($('time').value));
+$('offset').oninput=render;
+$('speed').oninput=()=>{speed=Number($('speed').value);$('speedOut').textContent=speed.toFixed(2)+'×'};
+$('reset').onclick=()=>{horizon=TIMELINE_SPAN;seek(0)};
+$('step').onclick=()=>{setPlaying(false);advance(.05);render()};
+$('play').onclick=()=>setPlaying(!playing);
+function tick(ms){
+ if(playing&&last){
+  advance(Math.min(.05,(ms-last)/1000)*speed);
+  render();
+ }
+ last=ms;requestAnimationFrame(tick);
+}
+choose('water');
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
